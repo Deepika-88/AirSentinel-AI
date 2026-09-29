@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>AirSentinel-AI</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7f9;
+            color: #1f2937;
+        }
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 20px 40px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header span {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
+        .container {
+            padding: 30px 40px;
+        }
+
+        .intro {
+            margin-bottom: 25px;
+        }
+
+        .intro h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .intro p {
+            color: #64748b;
+        }
+
+        /* =========================
+           CARDS
+        ========================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h3 {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .value {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           MAIN GRID
+        ========================= */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .panel h2 {
+            margin-bottom: 18px;
+        }
+
+        /* =========================
+           MAP
+        ========================= */
+
+        #map {
+            height: 380px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .legend {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .green {
+            background: green;
+        }
+
+        .yellow {
+            background: orange;
+        }
+
+        .red {
+            background: red;
+        }
+
+        .blue {
+            background: blue;
+        }
+
+        /* =========================
+           RISK
+        ========================= */
+
+        .risk {
+            padding: 18px;
+            border-radius: 10px;
+            background: #fff7ed;
+            margin-bottom: 20px;
+        }
+
+        .risk strong {
+            display: block;
+            font-size: 24px;
+            margin-top: 5px;
+        }
+
+        /* =========================
+           FORECAST
+        ========================= */
+
+        .forecast {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* =========================
+           WEATHER
+        ========================= */
+
+        .weather-box {
+            margin-top: 5px;
+        }
+
+        .weather-location {
+            margin-bottom: 12px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .weather-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 14px;
+            border-radius: 10px;
+        }
+
+        .weather-item span {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .weather-item strong {
+            font-size: 20px;
+        }
+
+        /* =========================
+           POLLUTANTS
+        ========================= */
+
+        .pollution-box {
+            margin-top: 25px;
+        }
+
+        .pollution-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .pollution-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 14px;
+            border-radius: 10px;
+        }
+
+        .pollution-item span {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .pollution-item strong {
+            font-size: 19px;
+        }
+
+        .data-source {
+            margin-top: 12px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* =========================
+           FEDERATED
+        ========================= */
+
+        .federated-box {
+            margin-top: 25px;
+        }
+
+        .federated-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .federated-stat {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .federated-stat span {
+            display: block;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .federated-stat strong {
+            font-size: 22px;
+        }
+
+        .privacy-badge {
+            padding: 12px;
+            background: #ecfdf5;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .node {
+            padding: 13px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: white;
+        }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .node-city {
+            font-weight: bold;
+        }
+
+        .node-risk-high {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+
+        .node-risk-moderate {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .node-risk-low {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        /* =========================
+           AI ANALYSIS
+        ========================= */
+
+        .ai-box {
+            margin-top: 25px;
+        }
+
+        .ai-score {
+            text-align: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .ai-score-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .ai-score-value {
+            font-size: 42px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .ai-level {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .ai-explanation {
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            line-height: 1.5;
+        }
+
+        .factor {
+            display: inline-block;
+            padding: 6px 9px;
+            margin: 5px 4px 0 0;
+            border-radius: 15px;
+            background: #e2e8f0;
+            font-size: 12px;
+        }
+
+        /* =========================
+           ALERT CENTER
+        ========================= */
+
+        .alert-box {
+            margin-top: 25px;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+        }
+
+        .alert-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .alert-severity {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .alert-message {
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .alert-action {
+            padding: 12px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #fecaca;
+        }
+
+        .no-alert {
+            border-color: #bbf7d0;
+            background: #ecfdf5;
+        }
+
+        .alert-score {
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* =========================
+           CITIZEN REPORT
+        ========================= */
+
+        .report-panel {
+            margin-top: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: #0f172a;
+            color: white;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #1e293b;
+        }
+
+        .photo-preview {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #reportResult {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 900px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                padding: 20px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 18px 20px;
+            }
+
+            .weather-grid,
+            .pollution-grid,
+            .federated-summary {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>
+        🌍 AirSentinel-AI
+    </h1>
+
+    <span>
+        AI-Powered Air Quality Intelligence
+    </span>
+
+</header>
+
+
+<div class="container">
+
+
+    <div class="intro">
+
+        <h2>
+            Environmental Intelligence Dashboard
+        </h2>
+
+        <p>
+            Detect pollution hotspots, monitor air quality,
+            analyze citizen observations and integrate
+            distributed environmental intelligence.
+        </p>
+
+    </div>
+
+
+    <!-- =========================
+         TOP CARDS
+    ========================== -->
+
+    <div class="cards">
+
+        <div class="card">
+
+            <h3>
+                Current AQI
+            </h3>
+
+            <div
+                class="value"
+                id="aqi"
+            >
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Pollution Hotspots
+            </h3>
+
+            <div
+                class="value"
+                id="hotspots"
+            >
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Risk Level
+            </h3>
+
+            <div
+                class="value"
+                id="risk"
+            >
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                AQI Change
+            </h3>
+
+            <div
+                class="value"
+                id="prediction"
+            >
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="main-grid">
+
+
+        <!-- =========================
+             LEFT SIDE
+        ========================== -->
+
+        <div>
+
+
+            <!-- MAP -->
+
+            <div class="panel">
+
+                <h2>
+                    🗺️ Pollution Hotspot Map
+                </h2>
+
+
+                <div id="map"></div>
+
+
+                <div class="legend">
+
+                    <div class="legend-item">
+                        <span class="dot green"></span>
+                        Low
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="dot yellow"></span>
+                        Moderate
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="dot red"></span>
+                        High
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="dot blue"></span>
+                        Citizen
+                    </div>
+
+                </div>
+
+
+                <!-- CITIZEN REPORT -->
+
+                <div class="report-panel">
+
+                    <h2>
+                        📢 Submit Citizen Observation
+                    </h2>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Location
+                        </label>
+
+
+                        <select id="location">
+
+                            <option value="">
+                                Select location
+                            </option>
+
+                            <option value="Hyderabad">
+                                Hyderabad
+                            </option>
+
+                            <option value="Mumbai">
+                                Mumbai
+                            </option>
+
+                            <option value="Bengaluru">
+                                Bengaluru
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Pollution Type
+                        </label>
+
+
+                        <select id="pollutionType">
+
+                            <option value="">
+                                Select pollution type
+                            </option>
+
+                            <option value="Industrial Emission">
+                                Industrial Emission
+                            </option>
+
+                            <option value="Vehicle Emission">
+                                Vehicle Emission
+                            </option>
+
+                            <option value="Agricultural Burning">
+                                Agricultural Burning
+                            </option>
+
+                            <option value="Smoke">
+                                Smoke
+                            </option>
+
+                            <option value="Dust">
+                                Dust
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Severity
+                        </label>
+
+
+                        <select id="severity">
+
+                            <option value="">
+                                Select severity
+                            </option>
+
+                            <option value="Low">
+                                Low
+                            </option>
+
+                            <option value="Moderate">
+                                Moderate
+                            </option>
+
+                            <option value="High">
+                                High
+                            </option>
+
+                            <option value="Critical">
+                                Critical
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Description
+                        </label>
+
+
+                        <textarea
+                            id="description"
+                            placeholder="Describe what you observed..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            📷 Pollution Photo
+                        </label>
+
+
+                        <input
+                            type="file"
+                            id="photo"
+                            accept="image/png,image/jpeg,image/webp"
+                            onchange="previewPhoto()"
+                        >
+
+
+                        <img
+                            id="photoPreview"
+                            class="photo-preview"
+                            alt="Selected pollution photo"
+                        >
+
+                    </div>
+
+
+                    <button
+                        class="submit-btn"
+                        onclick="submitObservation()"
+                    >
+                        Submit Observation
+                    </button>
+
+
+                    <p id="reportResult"></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             RIGHT SIDE
+        ========================== -->
+
+        <div>
+
+
+            <!-- RISK + FORECAST -->
+
+            <div class="panel">
+
+                <h2>
+                    ⚠️ Risk Monitor
+                </h2>
+
+
+                <div class="risk">
+
+                    Current Risk
+
+                    <strong id="riskMonitor">
+                        Loading...
+                    </strong>
+
+                    <span>
+                        Based on current air-quality conditions.
+                    </span>
+
+                </div>
+
+
+                <h2>
+                    📈 AQ Forecast
+                </h2>
+
+
+                <div class="forecast">
+
+                    <span>
+                        Now
+                    </span>
+
+                    <strong id="forecastNow">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="forecast">
+
+                    <span>
+                        +3 Hours
+                    </span>
+
+                    <strong id="forecast3">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="forecast">
+
+                    <span>
+                        +6 Hours
+                    </span>
+
+                    <strong id="forecast6">
+                        --
+                    </strong>
+
+                </div>
+
+
+                <div class="forecast">
+
+                    <span>
+                        +12 Hours
+                    </span>
+
+                    <strong id="forecast12">
+                        --
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- WEATHER -->
+
+            <div class="panel">
+
+                <h2>
+                    🌦️ Weather Intelligence
+                </h2>
+
+
+                <div
+                    class="weather-location"
+                    id="weatherLocation"
+                >
+                    Loading weather...
+                </div>
+
+
+                <div class="weather-grid">
+
+
+                    <div class="weather-item">
+
+                        <span>
+                            Temperature
+                        </span>
+
+                        <strong id="temperature">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="weather-item">
+
+                        <span>
+                            Humidity
+                        </span>
+
+                        <strong id="humidity">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="weather-item">
+
+                        <span>
+                            Wind Speed
+                        </span>
+
+                        <strong id="windSpeed">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="weather-item">
+
+                        <span>
+                            Precipitation
+                        </span>
+
+                        <strong id="precipitation">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- POLLUTANTS -->
+
+                <div class="pollution-box">
+
+                    <h2>
+                        🧪 Pollutant Levels
+                    </h2>
+
+
+                    <div class="pollution-grid">
+
+
+                        <div class="pollution-item">
+
+                            <span>
+                                PM2.5
+                            </span>
+
+                            <strong id="pm25">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="pollution-item">
+
+                            <span>
+                                PM10
+                            </span>
+
+                            <strong id="pm10">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="pollution-item">
+
+                            <span>
+                                NO₂
+                            </span>
+
+                            <strong id="no2">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="pollution-item">
+
+                            <span>
+                                SO₂
+                            </span>
+
+                            <strong id="so2">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="pollution-item">
+
+                            <span>
+                                O₃
+                            </span>
+
+                            <strong id="o3">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="data-source">
+
+                        Data source:
+                        Open-Meteo Air Quality API
+
+                    </div>
+
+                </div>
+
+
+                <!-- FEDERATED NETWORK -->
+
+                <div class="federated-box">
+
+                    <h2>
+                        🔗 Federated Sensor Network
+                    </h2>
+
+
+                    <p
+                        style="
+                            color:#64748b;
+                            font-size:14px;
+                            margin-bottom:15px;
+                        "
+                    >
+                        Distributed environmental nodes
+                        contribute aggregated insights
+                        without sharing raw sensor values.
+                    </p>
+
+
+                    <div class="federated-summary">
+
+
+                        <div class="federated-stat">
+
+                            <span>
+                                Aggregated AQI
+                            </span>
+
+                            <strong
+                                id="aggregatedAqi"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="federated-stat">
+
+                            <span>
+                                High-Risk Nodes
+                            </span>
+
+                            <strong
+                                id="highRiskNodes"
+                            >
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="privacy-badge">
+
+                        🔒 Raw sensor values shared:
+
+                        <strong
+                            id="rawShared"
+                        >
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div id="sensorNodes">
+
+                        Loading sensor nodes...
+
+                    </div>
+
+                </div>
+
+
+                <!-- AI ANALYSIS -->
+
+                <div class="ai-box">
+
+                    <h2>
+                        🤖 AI Environmental Risk Analysis
+                    </h2>
+
+
+                    <p
+                        style="
+                            color:#64748b;
+                            font-size:14px;
+                            margin-bottom:15px;
+                        "
+                    >
+                        Explainable prototype risk analysis
+                        using current air-quality indicators
+                        and federated sensor information.
+                    </p>
+
+
+                    <div class="ai-score">
+
+                        <div class="ai-score-label">
+                            Environmental Risk Score
+                        </div>
+
+
+                        <div
+                            class="ai-score-value"
+                            id="aiScore"
+                        >
+                            --
+                        </div>
+
+
+                        <div
+                            class="ai-level"
+                            id="aiLevel"
+                        >
+                            Loading...
+                        </div>
+
+                    </div>
+
+
+                    <div class="ai-explanation">
+
+                        <strong>
+                            Why?
+                        </strong>
+
+
+                        <p id="aiExplanation">
+                            Loading analysis...
+                        </p>
+
+
+                        <div id="aiFactors"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ALERT CENTER -->
+
+                <div class="ai-box">
+
+                    <h2>
+                        🚨 Environmental Alert Center
+                    </h2>
+
+
+                    <p
+                        style="
+                            color:#64748b;
+                            font-size:14px;
+                            margin-bottom:15px;
+                        "
+                    >
+                        Prototype alert generated from the
+                        current environmental risk analysis.
+                    </p>
+
+
+                    <div
+                        class="alert-box"
+                        id="alertBox"
+                    >
+
+                        <div
+                            class="alert-title"
+                            id="alertTitle"
+                        >
+                            Loading alert...
+                        </div>
+
+
+                        <div
+                            class="alert-severity"
+                            id="alertSeverity"
+                        >
+                            --
+                        </div>
+
+
+                        <div
+                            class="alert-message"
+                            id="alertMessage"
+                        >
+                            Loading...
+                        </div>
+
+
+                        <div class="alert-action">
+
+                            <strong>
+                                Recommended Action
+                            </strong>
+
+
+                            <p
+                                id="alertAction"
+                                style="margin-top:8px;"
+                            >
+                                Loading...
+                            </p>
+
+                        </div>
+
+
+                        <div
+                            class="alert-score"
+                            id="alertScore"
+                        >
+                            Risk score: --
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<script>
+
+
+/* =========================================
+   CITY COORDINATES
+========================================= */
+
+const cityCoordinates = {
+
+    Hyderabad: {
+        lat: 17.3850,
+        lng: 78.4867
+    },
+
+    Mumbai: {
+        lat: 19.0760,
+        lng: 72.8777
+    },
+
+    Bengaluru: {
+        lat: 12.9716,
+        lng: 77.5946
+    }
+
+};
+
+
+/* =========================================
+   LOAD DASHBOARD
+========================================= */
+
+async function loadDashboard() {
+
+    try {
+
+        const response =
+            await fetch("/api/dashboard");
+
+        const data =
+            await response.json();
+
+
+        document.getElementById("aqi").innerText =
+            data.aqi;
+
+        document.getElementById("hotspots").innerText =
+            data.hotspots;
+
+        document.getElementById("risk").innerText =
+            data.risk;
+
+        document.getElementById("prediction").innerText =
+            data.prediction;
+
+        document.getElementById("riskMonitor").innerText =
+            data.risk;
+
+        document.getElementById("forecastNow").innerText =
+            data.forecast.now;
+
+        document.getElementById("forecast3").innerText =
+            data.forecast["3_hours"];
+
+        document.getElementById("forecast6").innerText =
+            data.forecast["6_hours"];
+
+        document.getElementById("forecast12").innerText =
+            data.forecast["12_hours"];
+
+        document.getElementById("pm25").innerText =
+            data.pollutants.pm2_5 +
+            " µg/m³";
+
+        document.getElementById("pm10").innerText =
+            data.pollutants.pm10 +
+            " µg/m³";
+
+        document.getElementById("no2").innerText =
+            data.pollutants.nitrogen_dioxide +
+            " µg/m³";
+
+        document.getElementById("so2").innerText =
+            data.pollutants.sulphur_dioxide +
+            " µg/m³";
+
+        document.getElementById("o3").innerText =
+            data.pollutants.ozone +
+            " µg/m³";
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Dashboard error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   WEATHER
+========================================= */
+
+async function loadWeather() {
+
+    try {
+
+        const response =
+            await fetch("/api/weather");
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            document.getElementById(
+                "weatherLocation"
+            ).innerText =
+                "📍 " + data.location;
+
+
+            document.getElementById(
+                "temperature"
+            ).innerText =
+                data.temperature + " °C";
+
+
+            document.getElementById(
+                "humidity"
+            ).innerText =
+                data.humidity + " %";
+
+
+            document.getElementById(
+                "windSpeed"
+            ).innerText =
+                data.wind_speed + " m/s";
+
+
+            document.getElementById(
+                "precipitation"
+            ).innerText =
+                data.precipitation + " mm";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Weather error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   FEDERATED NETWORK
+========================================= */
+
+async function loadFederatedNetwork() {
+
+    try {
+
+        const response =
+            await fetch("/api/federated");
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+            return;
+        }
+
+
+        document.getElementById(
+            "aggregatedAqi"
+        ).innerText =
+            data.aggregated_aqi;
+
+
+        document.getElementById(
+            "highRiskNodes"
+        ).innerText =
+            data.high_risk_nodes;
+
+
+        document.getElementById(
+            "rawShared"
+        ).innerText =
+            data.raw_sensor_values_shared
+                ? "YES"
+                : "NO";
+
+
+        const sensorNodes =
+            document.getElementById(
+                "sensorNodes"
+            );
+
+
+        sensorNodes.innerHTML = "";
+
+
+        data.nodes.forEach(
+            function(node) {
+
+                const nodeDiv =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                nodeDiv.className =
+                    "node";
+
+
+                let riskClass =
+                    "node-risk-low";
+
+
+                if (
+                    node.risk === "High"
+                ) {
+
+                    riskClass =
+                        "node-risk-high";
+
+                }
+
+                else if (
+                    node.risk === "Moderate"
+                ) {
+
+                    riskClass =
+                        "node-risk-moderate";
+
+                }
+
+
+                nodeDiv.innerHTML = `
+
+                    <div class="node-header">
+
+                        <span class="node-city">
+                            📡 ${node.city}
+                        </span>
+
+                        <span class="${riskClass}">
+                            ${node.risk}
+                        </span>
+
+                    </div>
+
+                    <div>
+                        Local AQI:
+                        <strong>
+                            ${node.local_aqi}
+                        </strong>
+                    </div>
+
+                `;
+
+
+                sensorNodes.appendChild(
+                    nodeDiv
+                );
+
+
+                if (
+                    cityCoordinates[node.city]
+                ) {
+
+                    const coordinates =
+                        cityCoordinates[node.city];
+
+
+                    let markerColor =
+                        "green";
+
+
+                    if (
+                        node.risk === "High"
+                    ) {
+
+                        markerColor =
+                            "red";
+
+                    }
+
+                    else if (
+                        node.risk === "Moderate"
+                    ) {
+
+                        markerColor =
+                            "orange";
+
+                    }
+
+
+                    const marker =
+                        L.circleMarker(
+                            [
+                                coordinates.lat,
+                                coordinates.lng
+                            ],
+                            {
+
+                                radius: 7,
+
+                                color:
+                                    markerColor,
+
+                                fillColor:
+                                    markerColor,
+
+                                fillOpacity:
+                                    0.9
+
+                            }
+                        )
+                        .addTo(map);
+
+
+                    marker.bindPopup(
+
+                        "<b>📡 Federated Sensor Node</b>" +
+
+                        "<br>City: " +
+                        node.city +
+
+                        "<br>Local AQI: " +
+                        node.local_aqi +
+
+                        "<br>Risk: " +
+                        node.risk
+
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Federated error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   AI ANALYSIS
+========================================= */
+
+async function loadAIAnalysis() {
+
+    try {
+
+        const response =
+            await fetch("/api/ai-analysis");
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+            return;
+        }
+
+
+        document.getElementById(
+            "aiScore"
+        ).innerText =
+            data.risk_score;
+
+
+        document.getElementById(
+            "aiLevel"
+        ).innerText =
+            data.risk_level;
+
+
+        document.getElementById(
+            "aiExplanation"
+        ).innerText =
+            data.explanation;
+
+
+        const factors =
+            document.getElementById(
+                "aiFactors"
+            );
+
+
+        factors.innerHTML = "";
+
+
+        data.factors.forEach(
+            function(factor) {
+
+                const span =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                span.className =
+                    "factor";
+
+
+                span.innerText =
+                    factor;
+
+
+                factors.appendChild(
+                    span
+                );
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "AI analysis error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   ALERT CENTER
+========================================= */
+
+async function loadAlert() {
+
+    try {
+
+        const response =
+            await fetch("/api/alert");
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            document.getElementById(
+                "alertTitle"
+            ).innerText =
+                "Alert unavailable";
+
+            return;
+
+        }
+
+
+        const alertBox =
+            document.getElementById(
+                "alertBox"
+            );
+
+
+        const alertTitle =
+            document.getElementById(
+                "alertTitle"
+            );
+
+
+        const alertSeverity =
+            document.getElementById(
+                "alertSeverity"
+            );
+
+
+        const alertMessage =
+            document.getElementById(
+                "alertMessage"
+            );
+
+
+        const alertAction =
+            document.getElementById(
+                "alertAction"
+            );
+
+
+        const alertScore =
+            document.getElementById(
+                "alertScore"
+            );
+
+
+        if (data.alert) {
+
+            alertBox.classList.remove(
+                "no-alert"
+            );
+
+
+            alertTitle.innerText =
+                "🚨 " + data.title;
+
+
+            alertSeverity.innerText =
+                "Severity: " +
+                data.severity;
+
+
+            alertMessage.innerText =
+                data.message;
+
+
+            alertAction.innerText =
+                data.action;
+
+
+            alertScore.innerText =
+                "Risk score: " +
+                data.risk_score +
+                "/100";
+
+        }
+
+        else {
+
+            alertBox.classList.add(
+                "no-alert"
+            );
+
+
+            alertTitle.innerText =
+                "✅ " + data.title;
+
+
+            alertSeverity.innerText =
+                "No immediate alert";
+
+
+            alertMessage.innerText =
+                data.message;
+
+
+            alertAction.innerText =
+                data.action;
+
+
+            alertScore.innerText =
+                "Risk score: " +
+                data.risk_score +
+                "/100";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Alert error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   MAP
+========================================= */
+
+const map =
+    L.map("map").setView(
+        [15.5, 77.8],
+        5
+    );
+
+
+L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        attribution:
+            "&copy; OpenStreetMap contributors"
+    }
+).addTo(map);
+
+
+/* =========================================
+   DEMO HOTSPOTS
+========================================= */
+
+L.circle(
+    [17.3850, 78.4867],
+    {
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.45,
+        radius: 25000
+    }
+)
+.addTo(map)
+.bindPopup(
+    "<b>High Pollution Hotspot</b><br>Hyderabad"
+);
+
+
+L.circle(
+    [19.0760, 72.8777],
+    {
+        color: "orange",
+        fillColor: "orange",
+        fillOpacity: 0.45,
+        radius: 25000
+    }
+)
+.addTo(map)
+.bindPopup(
+    "<b>Moderate Pollution Hotspot</b><br>Mumbai"
+);
+
+
+L.circle(
+    [12.9716, 77.5946],
+    {
+        color: "green",
+        fillColor: "green",
+        fillOpacity: 0.45,
+        radius: 20000
+    }
+)
+.addTo(map)
+.bindPopup(
+    "<b>Lower Pollution Area</b><br>Bengaluru"
+);
+
+
+/* =========================================
+   CITIZEN MARKER
+========================================= */
+
+function addObservationMarker(
+    observation
+) {
+
+    if (
+        observation.latitude === null ||
+        observation.longitude === null
+    ) {
+
+        return;
+
+    }
+
+
+    let markerColor =
+        "blue";
+
+
+    if (
+        observation.severity === "High" ||
+        observation.severity === "Critical"
+    ) {
+
+        markerColor =
+            "red";
+
+    }
+
+    else if (
+        observation.severity === "Moderate"
+    ) {
+
+        markerColor =
+            "orange";
+
+    }
+
+
+    const marker =
+        L.circleMarker(
+            [
+                observation.latitude,
+                observation.longitude
+            ],
+            {
+
+                radius: 9,
+
+                color:
+                    markerColor,
+
+                fillColor:
+                    markerColor,
+
+                fillOpacity:
+                    0.8
+
+            }
+        )
+        .addTo(map);
+
+
+    let popup =
+
+        "<b>📢 Citizen Observation</b>" +
+
+        "<br>Location: " +
+        observation.location +
+
+        "<br>Pollution Type: " +
+        observation.pollution_type +
+
+        "<br>Severity: " +
+        observation.severity +
+
+        "<br>" +
+        observation.description;
+
+
+    if (
+        observation.photo_url
+    ) {
+
+        popup +=
+
+            "<br><br>" +
+
+            "<img src='" +
+            observation.photo_url +
+            "' style='width:220px;border-radius:8px'>" +
+
+            "<br><small>Citizen photo evidence</small>";
+
+    }
+
+
+    popup +=
+
+        "<br><small>" +
+        observation.timestamp +
+        "</small>";
+
+
+    marker.bindPopup(
+        popup
+    );
+
+}
+
+
+/* =========================================
+   LOAD OBSERVATIONS
+========================================= */
+
+async function loadObservations() {
+
+    try {
+
+        const response =
+            await fetch("/api/observations");
+
+        const data =
+            await response.json();
+
+
+        data.observations.forEach(
+            addObservationMarker
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Observation error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   PHOTO PREVIEW
+========================================= */
+
+function previewPhoto() {
+
+    const file =
+        document.getElementById(
+            "photo"
+        ).files[0];
+
+
+    const preview =
+        document.getElementById(
+            "photoPreview"
+        );
+
+
+    if (!file) {
+
+        preview.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function(event) {
+
+            preview.src =
+                event.target.result;
+
+            preview.style.display =
+                "block";
+
+        };
+
+
+    reader.readAsDataURL(file);
+
+}
+
+
+/* =========================================
+   SUBMIT CITIZEN OBSERVATION
+========================================= */
+
+async function submitObservation() {
+
+    const location =
+        document.getElementById(
+            "location"
+        ).value;
+
+
+    const pollutionType =
+        document.getElementById(
+            "pollutionType"
+        ).value;
+
+
+    const severity =
+        document.getElementById(
+            "severity"
+        ).value;
+
+
+    const description =
+        document.getElementById(
+            "description"
+        ).value;
+
+
+    const photo =
+        document.getElementById(
+            "photo"
+        ).files[0];
+
+
+    const result =
+        document.getElementById(
+            "reportResult"
+        );
+
+
+    if (
+        location === "" ||
+        pollutionType === "" ||
+        severity === ""
+    ) {
+
+        result.innerText =
+            "Please fill in all required fields.";
+
+        return;
+
+    }
+
+
+    const coordinates =
+        cityCoordinates[location];
+
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "location",
+        location
+    );
+
+
+    formData.append(
+        "latitude",
+        coordinates.lat
+    );
+
+
+    formData.append(
+        "longitude",
+        coordinates.lng
+    );
+
+
+    formData.append(
+        "pollution_type",
+        pollutionType
+    );
+
+
+    formData.append(
+        "severity",
+        severity
+    );
+
+
+    formData.append(
+        "description",
+        description
+    );
+
+
+    if (photo) {
+
+        formData.append(
+            "photo",
+            photo
+        );
+
+    }
+
+
+    result.innerText =
+        "Submitting observation...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/observation",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            result.innerText =
+                "✅ Observation + photo submitted and mapped!";
+
+
+            addObservationMarker(
+                data.observation
+            );
+
+
+            document.getElementById(
+                "location"
+            ).value = "";
+
+
+            document.getElementById(
+                "pollutionType"
+            ).value = "";
+
+
+            document.getElementById(
+                "severity"
+            ).value = "";
+
+
+            document.getElementById(
+                "description"
+            ).value = "";
+
+
+            document.getElementById(
+                "photo"
+            ).value = "";
+
+
+            document.getElementById(
+                "photoPreview"
+            ).style.display =
+                "none";
+
+        }
+
+        else {
+
+            result.innerText =
+                "❌ Submission failed.";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Submission error:",
+            error
+        );
+
+
+        result.innerText =
+            "❌ Could not connect to backend.";
+
+    }
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+loadDashboard();
+
+loadWeather();
+
+loadFederatedNetwork();
+
+loadAIAnalysis();
+
+loadAlert();
+
+loadObservations();
+
+</script>
+
+
+</body>
+
+</html>
